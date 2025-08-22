@@ -2,7 +2,7 @@
 
 use crate::{ConfigureEvm, Database, OnStateHook, TxEnvFor};
 use alloc::{boxed::Box, vec::Vec};
-use alloy_consensus::{BlockHeader, Header};
+use alloy_consensus::{BlockHeader, Header, Transaction};
 use alloy_eips::eip2718::WithEncoded;
 pub use alloy_evm::block::{BlockExecutor, BlockExecutorFactory};
 use alloy_evm::{
@@ -16,7 +16,8 @@ pub use reth_execution_errors::{
 use reth_execution_types::BlockExecutionResult;
 pub use reth_execution_types::{BlockExecutionOutput, ExecutionOutcome};
 use reth_primitives_traits::{
-    Block, HeaderTy, NodePrimitives, ReceiptTy, Recovered, RecoveredBlock, SealedHeader, TxTy,
+    Block, BlockBody, HeaderTy, NodePrimitives, ReceiptTy, Recovered, RecoveredBlock, SealedHeader,
+    TxTy,
 };
 use reth_storage_api::StateProvider;
 pub use reth_storage_errors::provider::ProviderError;
@@ -437,7 +438,7 @@ where
         self,
         state: impl StateProvider,
     ) -> Result<BlockBuilderOutcome<N>, BlockExecutionError> {
-        let (evm, result) = self.executor.finish()?;
+        let (evm, result) = self.executor.finish(true)?;
         let (db, evm_env) = evm.finish();
 
         // merge all transitions into bundle state
@@ -513,10 +514,45 @@ where
         block: &RecoveredBlock<<Self::Primitives as NodePrimitives>::Block>,
     ) -> Result<BlockExecutionResult<<Self::Primitives as NodePrimitives>::Receipt>, Self::Error>
     {
-        let result = self
-            .strategy_factory
-            .executor_for_block(&mut self.db, block)
-            .execute_block(block.transactions_recovered())?;
+        let mut executor = self.strategy_factory.executor_for_block(&mut self.db, block);
+        executor.set_gas_used(block.starting_gas_used);
+
+        if block.is_first_subblock {
+            executor.apply_pre_execution_changes()?;
+        }
+
+        let transactions = block.transactions_recovered();
+        for tx in transactions {
+            // Checks to make sure
+            // 1. We are running in a mode where subblock gas limit is enforced (the host)
+            // 2. We have already executed at least one transaction in the subblock
+            // 3. The transaction gas limit + cumulative gas used is greater than the subblock gas
+            //    limit.
+            // This limits the size of subblocks.
+            if block.subblock_gas_limit != 0 &&
+                executor.gas_used() - block.starting_gas_used != 0 &&
+                tx.gas_limit() + executor.gas_used() > block.subblock_gas_limit
+            {
+                break;
+            }
+
+            executor.execute_transaction(tx)?;
+
+            // make sure to execute at least one transaction.
+            if block.subblock_gas_limit != 0 && executor.gas_used() > block.subblock_gas_limit {
+                break;
+            }
+        }
+
+        // 3. apply post execution changes
+        // If the number of receipts is the same as the number of transactions, then we executed all
+        // transactions. The first clause: if we're executing from the host, and we finished
+        // the entire block, postprocess. The second clause: if we're executing from the
+        // client, and the flag is set, postprocess.
+        let is_last = (block.subblock_gas_limit != 0 &&
+            executor.receipt_len() == block.body.transactions().len()) ||
+            block.is_last_subblock;
+        let result = executor.apply_post_execution_changes(is_last)?;
 
         self.db.merge_transitions(BundleRetention::Reverts);
 

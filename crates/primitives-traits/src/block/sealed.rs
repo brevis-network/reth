@@ -23,7 +23,7 @@ pub struct SealedBlock<B: Block> {
     /// Sealed Header.
     header: SealedHeader<B::Header>,
     /// the block's body.
-    body: B::Body,
+    pub body: B::Body,
 }
 
 impl<B: Block> SealedBlock<B> {

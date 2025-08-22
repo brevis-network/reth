@@ -473,7 +473,6 @@ revm-inspectors = "0.28.0"
 alloy-chains = { version = "0.2.5", default-features = false }
 alloy-dyn-abi = "1.3.1"
 alloy-eip2124 = { version = "0.2.0", default-features = false }
-alloy-evm = { version = "0.18.2", default-features = false }
 alloy-primitives = { version = "1.3.1", default-features = false, features = ["map-foldhash"] }
 alloy-rlp = { version = "0.3.10", default-features = false, features = ["core-net"] }
 alloy-sol-macro = "1.3.1"
@@ -509,6 +508,11 @@ alloy-transport = { version = "1.0.23" }
 alloy-transport-http = { version = "1.0.23", features = ["reqwest-rustls-tls"], default-features = false }
 alloy-transport-ipc = { version = "1.0.23", default-features = false }
 alloy-transport-ws = { version = "1.0.23", default-features = false }
+
+# update for sub-block
+alloy-evm = { git = "ssh://git@github.com/brevis-network/alloy-evm.git", branch = "pico", default-features = false }
+# debug on local
+# alloy-evm = { path = "../alloy-evm/crates/evm", default-features = false }
 
 # op
 alloy-op-evm = { version = "0.18", default-features = false }

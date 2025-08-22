@@ -123,7 +123,7 @@ impl ExecutorMetrics {
             for tx in transactions {
                 executor.execute_transaction(tx?)?;
             }
-            executor.finish().map(|(evm, result)| (evm.into_db(), result))
+            executor.finish(true).map(|(evm, result)| (evm.into_db(), result))
         };
 
         // Use metered to execute and track timing/gas metrics
