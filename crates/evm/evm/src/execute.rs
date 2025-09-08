@@ -523,23 +523,10 @@ where
 
         let transactions = block.transactions_recovered();
         for tx in transactions {
-            // Checks to make sure
-            // 1. We are running in a mode where subblock gas limit is enforced (the host)
-            // 2. We have already executed at least one transaction in the subblock
-            // 3. The transaction gas limit + cumulative gas used is greater than the subblock gas
-            //    limit.
-            // This limits the size of subblocks.
-            if block.subblock_gas_limit != 0 &&
-                executor.gas_used() - block.starting_gas_used != 0 &&
-                tx.gas_limit() + executor.gas_used() > block.subblock_gas_limit
-            {
-                break;
-            }
-
             executor.execute_transaction(tx)?;
 
             // make sure to execute at least one transaction.
-            if block.subblock_gas_limit != 0 && executor.gas_used() > block.subblock_gas_limit {
+            if block.subblock_gas_limit != 0 && executor.gas_used() >= block.subblock_gas_limit {
                 break;
             }
         }
