@@ -510,7 +510,7 @@ alloy-transport-ipc = { version = "1.0.23", default-features = false }
 alloy-transport-ws = { version = "1.0.23", default-features = false }
 
 # update for sub-block
-alloy-evm = { git = "https://git@github.com/brevis-network/alloy-evm.git", branch = "pico", default-features = false }
+alloy-evm = { git = "https://github.com/brevis-network/alloy-evm.git", branch = "pico", default-features = false }
 # debug on local
 # alloy-evm = { path = "../alloy-evm/crates/evm", default-features = false }
 
