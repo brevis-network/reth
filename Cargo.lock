@@ -280,7 +280,7 @@ dependencies = [
 [[package]]
 name = "alloy-evm"
 version = "0.18.3"
-source = "git+https://github.com/brevis-network/alloy-evm.git?branch=pico#3c288d13f8faf223647b1a82d04bad073a294364"
+source = "git+https://github.com/brevis-network/alloy-evm.git?branch=pico#a987360fcf65a5c8c7e01011c8b5bd18ef6eafc4"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
