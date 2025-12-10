@@ -21,9 +21,9 @@ use core::ops::Deref;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SealedBlock<B: Block> {
     /// Sealed Header.
-    header: SealedHeader<B::Header>,
+    pub header: SealedHeader<B::Header>,
     /// the block's body.
-    body: B::Body,
+    pub body: B::Body,
 }
 
 impl<B: Block> SealedBlock<B> {
